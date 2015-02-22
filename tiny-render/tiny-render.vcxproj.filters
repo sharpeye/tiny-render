@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{036fb912-1ef7-42f2-9ec8-e1b724f152fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{33d9c06e-d1d3-47ef-824c-8b75e5c64c7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model">
+      <UniqueIdentifier>{e85a7e4e-0b26-45e9-871d-622679320c3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Model\obj">
+      <UniqueIdentifier>{9aa8c1a2-d664-44d1-bd06-055ba00c1b6a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="line.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="obj.h">
+      <Filter>Model\obj</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>Model</Filter>
+    </ClInclude>
+    <ClInclude Include="render.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="obj.cpp">
+      <Filter>Model\obj</Filter>
+    </ClCompile>
+    <ClCompile Include="render.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
