@@ -3,7 +3,7 @@
 #include <boost/utility/swap.hpp>
 #include <boost/gil/gil_all.hpp>
 
-namespace miskopawel
+namespace sharpeye
 {
 	namespace gil = boost::gil;
 
@@ -95,4 +95,4 @@ namespace miskopawel
 		bresenhams_line( view, a, b, color );
 	}
 
-} // ns miskopawel
+} // ns sharpeye

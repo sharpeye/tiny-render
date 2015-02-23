@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include "../tiny-render/line.h"
 
-using namespace miskopawel;
+using namespace sharpeye;
 
 BOOST_AUTO_TEST_SUITE( Draw )
 

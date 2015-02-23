@@ -5,15 +5,17 @@
 #include <boost/phoenix.hpp>
 #include "obj.h"
 
-BOOST_FUSION_ADAPT_STRUCT( miskopawel::Model::Vertex, (double, x) (double, y) (double, z) )
-BOOST_FUSION_ADAPT_STRUCT( miskopawel::Model::Face, (unsigned, x) (unsigned, y) (unsigned, z) )
+BOOST_FUSION_ADAPT_STRUCT( glm::dvec3, (double, x) (double, y) (double, z) )
+BOOST_FUSION_ADAPT_STRUCT( glm::uvec3, (unsigned, x) (unsigned, y) (unsigned, z) )
+BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model::Face, (glm::uvec3, v) (glm::uvec3, t) (glm::uvec3, n) )
+BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model, (std::vector< sharpeye::Model::Face >, faces) (std::vector< sharpeye::Model::Vertex >, vertices) )
 
-namespace miskopawel
+namespace sharpeye
 {
 	using namespace boost::spirit;
 
 	template < typename Iterator >
-	struct obj_parser : qi::grammar< Iterator, void(), ascii::blank_type >
+	struct obj_parser : qi::grammar< Iterator, Model (), ascii::blank_type >
 	{
 		obj_parser()
 			: obj_parser::base_type( start )
@@ -22,30 +24,39 @@ namespace miskopawel
 			using qi::uint_;
 			using qi::lit;
 			using qi::eol;
+			using qi::_val;
+			using qi::_1;
+			using qi::_a;
+			using qi::_b;
+			using qi::_c;
 			using boost::phoenix::at_c;
 			using boost::phoenix::push_back;
-			using boost::phoenix::placeholders::_1;
 
-			comment = lit( '#' ) >> *(qi::char_ - eol);
+			vertex = lit( 'v' ) >> double_ >> double_ >> double_;
 
-			vertex = lit( 'v' ) >> ( double_ >> double_ >> double_ );
-			face = lit( 'f' ) >> ( uint_ >> uint_ >> uint_ );
+			face = lit( 'f' ) >> (
+					uint_[ at_c< 0 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 0 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 0 >( _c ) = _1 ] ) ) >> 
+					uint_[ at_c< 1 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 1 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 1 >( _c ) = _1 ] ) ) >> 
+					uint_[ at_c< 2 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 2 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 2 >( _c ) = _1 ] ) )
+					)[
+						at_c< 0 >( _val ) = _a,
+						at_c< 1 >( _val ) = _b,
+						at_c< 2 >( _val ) = _c
+					];
 
-			line = comment 
-				| vertex[ push_back( boost::ref( model.vertices ), at_c< 0 >( _1 ) ) ]
-				| face[ push_back( boost::ref( model.faces ), at_c< 0 >( _1 ) ) ]
-				;
-
-			start = *(line >> +eol);
+			start = ( 
+					face[ push_back( at_c< 0 >( _val ), _1 ) ] | 
+					vertex[ push_back( at_c< 1 >( _val ), _1 ) ] | 
+					*( qi::char_ - eol ) ) % eol
+				| eol;
 		}
 
-		qi::rule< Iterator, void(), ascii::blank_type > start;
+		qi::rule< Iterator, Model (), ascii::blank_type > start;
 		qi::rule< Iterator, void(), ascii::blank_type > line;
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > vertex;
-		qi::rule< Iterator, Model::Face (), ascii::blank_type > face;
-		qi::rule< Iterator, void() > comment;
+		qi::rule< Iterator, Model::Face (), ascii::blank_type, qi::locals< glm::uvec3, glm::uvec3, glm::uvec3 > > face;
 
-		Model model;
+		// Model model;
 
 	}; // obj_parser
 
@@ -57,7 +68,9 @@ namespace miskopawel
 
 		obj_parser< decltype( it ) > parser;
 
-		bool r = qi::phrase_parse( it, end, parser, ascii::blank );
+		Model model;
+
+		bool r = qi::phrase_parse( it, end, parser, ascii::blank, model );
 
 		if( !r || it != end )
 		{
@@ -69,7 +82,7 @@ namespace miskopawel
 			return {};
 		}
 
-		return std::move( parser.model );
+		return std::move( model );
 	}
 
 	Model load_obj( std::string const& filename )
@@ -79,4 +92,4 @@ namespace miskopawel
 		return load_obj( file );
 	}
 
-} // ns miskopawel
+} // ns sharpeye

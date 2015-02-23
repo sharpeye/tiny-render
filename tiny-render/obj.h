@@ -4,10 +4,10 @@
 #include <istream>
 #include "model.h"
 
-namespace miskopawel
+namespace sharpeye
 {
 	// load model from Wavefront .obj file
 	Model load_obj( std::istream & is );
 	Model load_obj( std::string const& filename );
 
-} // ns miskopawel
+} // ns sharpeye
