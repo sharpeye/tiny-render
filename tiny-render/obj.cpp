@@ -34,10 +34,12 @@ namespace sharpeye
 
 			vertex = lit( 'v' ) >> double_ >> double_ >> double_;
 
+			index = uint_[ _val = _1 - 1 ];
+
 			face = lit( 'f' ) >> (
-					uint_[ at_c< 0 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 0 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 0 >( _c ) = _1 ] ) ) >> 
-					uint_[ at_c< 1 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 1 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 1 >( _c ) = _1 ] ) ) >> 
-					uint_[ at_c< 2 >( _a ) = _1 ] >> -( '/' >> uint_[ at_c< 2 >( _b ) = _1 ] >> -( '/' >> uint_[ at_c< 2 >( _c ) = _1 ] ) )
+					index[ at_c< 0 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 0 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 0 >( _c ) = _1 ] ) ) >> 
+					index[ at_c< 1 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 1 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 1 >( _c ) = _1 ] ) ) >> 
+					index[ at_c< 2 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 2 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 2 >( _c ) = _1 ] ) )
 					)[
 						at_c< 0 >( _val ) = _a,
 						at_c< 1 >( _val ) = _b,
@@ -53,6 +55,7 @@ namespace sharpeye
 
 		qi::rule< Iterator, Model (), ascii::blank_type > start;
 		qi::rule< Iterator, void(), ascii::blank_type > line;
+		qi::rule< Iterator, unsigned() > index;
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > vertex;
 		qi::rule< Iterator, Model::Face (), ascii::blank_type, qi::locals< glm::uvec3, glm::uvec3, glm::uvec3 > > face;
 

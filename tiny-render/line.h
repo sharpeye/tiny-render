@@ -37,43 +37,52 @@ namespace sharpeye
 		std::fill_n( view.col_begin( x ) + a, b - a + 1, color );
 	}
 
-	template< typename View > inline
-	void bresenhams_line( View const & view, 
+	template< typename View, typename F > inline
+	void bresenhams_line_impl(
 		typename View::point_t a, 
 		typename View::point_t b,
-		typename View::value_type const & color )
+		typename View::value_type const & color, F && f )
 	{
 		if( a.x > b.x )
 		{
 			boost::swap( a, b );
 		}
 
-		auto dx = b.x - a.x;
-		auto dy = b.y - a.y;
-
-		int step = 1;
-
-		if( dy < 0 )
-		{
-			step = -1;
-			dy = -dy;
-		}
-
-		decltype( dx ) error {};
-		auto deltaerr = dy;
-		auto y = a.y;
-
 		for( auto x = a.x; x <= b.x; ++x )
 		{
-			view( x, y ) = color;
+			auto t = ( x - a.x ) / (double) ( b.x - a.x );
+			auto y = static_cast< decltype( x ) >( a.y * ( 1. - t ) + b.y * t );
 
-			error = error + deltaerr;
-			if( 2 * error >= dx )
-			{
-				 y += step;
-				 error = error - dx;
-			}
+			f( x, y );
 		}
+	}
+
+	template< typename View > inline
+	void bresenhams_line( View const & view, 
+		typename View::point_t a, 
+		typename View::point_t b,
+		typename View::value_type const & color )
+	{
+		auto dx = std::abs( b.x - a.x );
+		auto dy = std::abs( b.y - a.y );
+
+		if( dx < dy )
+		{
+			boost::swap( a.x, a.y );
+			boost::swap( b.x, b.y );
+
+			return bresenhams_line_impl< View >( a, b, color, 
+				[&]( int x, int y )
+				{ 
+					view( y, x ) = color;
+				} );
+		}
+
+		bresenhams_line_impl< View >( a, b, color, 
+			[&]( int x, int y )
+			{ 
+				view( x, y ) = color;
+			} );
 	}
 
 	template< typename View > inline
