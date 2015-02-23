@@ -7,7 +7,7 @@
 
 using namespace sharpeye;
 
-int wmain( int argc, wchar_t * argv[] )
+int main( int argc, char * argv[] )
 {
 	gil::rgb8_image_t img( 820, 820 );
 
@@ -15,7 +15,7 @@ int wmain( int argc, wchar_t * argv[] )
 
 	render_model( gil::subimage_view( gil::view( img ), 10, 10, 800, 800 ), load_obj( "D:\\tmp\\african_head.obj" ) );
 
-	gil::png_write_view( "D:\\tmp\\img.png", gil::rotated180_view( gil::const_view( img ) ) );
+	gil::png_write_view( argc > 1 ? argv[ 1 ] : "output.png", gil::rotated180_view( gil::const_view( img ) ) );
 
 	return 0;
 }
