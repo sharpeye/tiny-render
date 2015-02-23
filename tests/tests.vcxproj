@@ -87,6 +87,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\tiny-render\model.cpp" />
     <ClCompile Include="..\tiny-render\obj.cpp" />
     <ClCompile Include="draw.cpp" />
     <ClCompile Include="obj_loader.cpp" />

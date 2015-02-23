@@ -42,17 +42,17 @@ BOOST_AUTO_TEST_CASE( bad_format )
 
 BOOST_AUTO_TEST_CASE( faces_1 )
 {
-	glm::uvec3 vs[] = { 
-		{ 1, 2, 3 },
-		{ 4, 5, 6 },
-		{ 7, 8, 9 }
+	Model::Face fs[] = { 
+		Model::Face{ { 1, 2, 3 } },
+		Model::Face{ { 4, 5, 6 } },
+		Model::Face{ { 7, 8, 9 } }
 	};
 
 	std::string s;
 
-	for( auto v : vs  )
+	for( auto f : fs  )
 	{
-		s += str( boost::format( "f %d %d %d\n" ) % v.x % v.y % v.z );
+		s += str( boost::format( "f %d %d %d\n" ) % f.v.x % f.v.y % f.v.z );
 	}
 
 	std::istringstream iss{ s };
@@ -60,13 +60,8 @@ BOOST_AUTO_TEST_CASE( faces_1 )
 	auto model = load_obj( iss );
 
 	BOOST_REQUIRE( model.vertices.size() == 0 );
-	BOOST_REQUIRE( model.faces.size() == _countof( vs ) );
-	BOOST_REQUIRE( boost::equal( model.faces, vs, 
-		[]( auto face, auto v ) 
-		{ 
-			return face.v == v; 
-		} ) 
-	);
+	BOOST_REQUIRE( model.faces.size() == _countof( fs ) );
+	BOOST_REQUIRE( boost::equal( model.faces, fs ) );
 }
 
 
@@ -94,13 +89,7 @@ BOOST_AUTO_TEST_CASE( faces_2 )
 
 	BOOST_REQUIRE( model.vertices.size() == 0 );
 	BOOST_REQUIRE( model.faces.size() == _countof( fs ) );
-
-	BOOST_REQUIRE( boost::equal( model.faces, fs, 
-		[]( auto lhs, auto rhs ) 
-		{ 
-			return lhs.v == rhs.v && lhs.t == rhs.t;
-		} ) 
-	);
+	BOOST_REQUIRE( boost::equal( model.faces, fs ) );
 }
 
 BOOST_AUTO_TEST_CASE( faces_3 )
@@ -127,13 +116,7 @@ BOOST_AUTO_TEST_CASE( faces_3 )
 
 	BOOST_REQUIRE( model.vertices.size() == 0 );
 	BOOST_REQUIRE( model.faces.size() == _countof( fs ) );
-
-	BOOST_REQUIRE( boost::equal( model.faces, fs, 
-		[]( auto lhs, auto rhs ) 
-		{ 
-			return lhs.v == rhs.v && lhs.t == rhs.t && lhs.n == rhs.n;
-		} ) 
-	);
+	BOOST_REQUIRE( boost::equal( model.faces, fs ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

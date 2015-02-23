@@ -21,4 +21,6 @@ namespace sharpeye
 
 	}; // Model
 
+	bool operator == ( Model::Face const & lhs, Model::Face const & rhs );
+
 } // ns sharpeye

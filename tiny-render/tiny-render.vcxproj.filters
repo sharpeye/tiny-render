@@ -62,5 +62,8 @@
     <ClCompile Include="render.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>Model</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

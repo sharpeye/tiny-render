@@ -91,6 +91,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="obj.cpp" />
     <ClCompile Include="render.cpp" />
     <ClCompile Include="stdafx.cpp">
