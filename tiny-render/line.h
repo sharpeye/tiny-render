@@ -41,19 +41,37 @@ namespace sharpeye
 	void bresenhams_line_impl(
 		typename View::point_t a, 
 		typename View::point_t b,
-		typename View::value_type const & color, F && f )
+		typename View::value_type const & color, F && plot )
 	{
 		if( a.x > b.x )
 		{
 			boost::swap( a, b );
 		}
 
+		auto dx = b.x - a.x;
+		auto dy = b.y - a.y;
+
+		decltype( dy ) error = 0;
+		decltype( dy ) step = 1;
+
+		if( dy < 0 )
+		{
+			dy = -dy;
+			step = -1;
+		}
+
+		auto de = dy;
+		auto y = a.y;
+
 		for( auto x = a.x; x <= b.x; ++x )
 		{
-			auto t = ( x - a.x ) / (double) ( b.x - a.x );
-			auto y = static_cast< decltype( x ) >( a.y * ( 1. - t ) + b.y * t );
-
-			f( x, y );
+			plot( x, y );
+			error += de;
+			if( error * 2 >= dx )
+			{
+				y += step;
+				error -= dx;
+			}
 		}
 	}
 

@@ -19,7 +19,9 @@ BOOST_AUTO_TEST_CASE( obj_loader )
 	BOOST_REQUIRE( (model.vertices[ 0 ] == glm::dvec3{ 1, 2, 3 }) );
 
 	BOOST_REQUIRE( model.faces.size() == 1 );
-	BOOST_REQUIRE( (model.faces[ 0 ].v == glm::uvec3{ 5, 7, 9 }) );
+	BOOST_REQUIRE( (model.faces[ 0 ].v == glm::uvec3{ 4, 6, 8 }) );
+	BOOST_REQUIRE( (model.faces[ 0 ].t == glm::uvec3{}) );
+	BOOST_REQUIRE( (model.faces[ 0 ].n == glm::uvec3{}) );
 }
 
 BOOST_AUTO_TEST_CASE( empty )
@@ -52,7 +54,11 @@ BOOST_AUTO_TEST_CASE( faces_1 )
 
 	for( auto f : fs  )
 	{
-		s += str( boost::format( "f %d %d %d\n" ) % f.v.x % f.v.y % f.v.z );
+		s += str( boost::format( "f %d %d %d\n" ) 
+			% ( f.v.x + 1 ) 
+			% ( f.v.y + 1 ) 
+			% ( f.v.z + 1 ) 
+			);
 	}
 
 	std::istringstream iss{ s };
@@ -78,9 +84,10 @@ BOOST_AUTO_TEST_CASE( faces_2 )
 	for( auto f : fs  )
 	{
 		s += str( boost::format( "f %d/%d %d/%d %d/%d\n" ) 
-			% f.v.x % f.t.x
-			% f.v.y % f.t.y
-			% f.v.z % f.t.z );
+			% ( f.v.x + 1 ) % ( f.t.x + 1 )
+			% ( f.v.y + 1 ) % ( f.t.y + 1 )
+			% ( f.v.z + 1 ) % ( f.t.z + 1 )
+			);
 	}
 
 	std::istringstream iss{ s };
@@ -95,9 +102,9 @@ BOOST_AUTO_TEST_CASE( faces_2 )
 BOOST_AUTO_TEST_CASE( faces_3 )
 {
 	Model::Face fs[] = { 
-		Model::Face{ { 1, 2, 3 }, { 3, 2, 1 }, { 9, 8, 7 } },
-		Model::Face{ { 4, 5, 6 }, { 6, 5, 4 }, { 6, 5, 4 } },
-		Model::Face{ { 7, 8, 9 }, { 9, 8, 7 }, { 3, 2, 1 } }
+		Model::Face{ { 10, 2, 3 }, { 3, 2, 1 }, { 9, 8, 7 } },
+		Model::Face{ { 40, 5, 6 }, { 6, 5, 4 }, { 6, 5, 4 } },
+		Model::Face{ { 70, 8, 9 }, { 9, 8, 7 }, { 3, 2, 1 } }
 	};
 
 	std::string s;
@@ -105,9 +112,10 @@ BOOST_AUTO_TEST_CASE( faces_3 )
 	for( auto f : fs  )
 	{
 		s += str( boost::format( "f %d/%d/%d %d/%d/%d %d/%d/%d\n" ) 
-			% f.v.x % f.t.x % f.n.x
-			% f.v.y % f.t.y % f.n.y
-			% f.v.z % f.t.z % f.n.z );
+			% ( f.v.x + 1 ) % ( f.t.x + 1 ) % ( f.n.x + 1 )
+			% ( f.v.y + 1 ) % ( f.t.y + 1 ) % ( f.n.y + 1 )
+			% ( f.v.z + 1 ) % ( f.t.z + 1 ) % ( f.n.z + 1 )
+			);
 	}
 
 	std::istringstream iss{ s };
