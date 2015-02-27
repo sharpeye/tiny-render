@@ -59,8 +59,6 @@ namespace sharpeye
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > vertex;
 		qi::rule< Iterator, Model::Face (), ascii::blank_type, qi::locals< glm::uvec3, glm::uvec3, glm::uvec3 > > face;
 
-		// Model model;
-
 	}; // obj_parser
 
 	Model load_obj( std::istream & is )

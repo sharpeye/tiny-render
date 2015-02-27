@@ -40,7 +40,7 @@ int main( int argc, char * argv[] )
 		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 0, 0 } );
 
 		render_model( gil::subimage_view( gil::view( img ), 10, 10, 800, 800 ), load_obj( in ) );
-		gil::png_write_view( out, gil::rotated180_view( gil::const_view( img ) ) );
+		gil::png_write_view( out, gil::flipped_up_down_view( gil::const_view( img ) ) );
 
 		return 0;
 	}

@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="IO">
-      <UniqueIdentifier>{036fb912-1ef7-42f2-9ec8-e1b724f152fd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Render">
       <UniqueIdentifier>{33d9c06e-d1d3-47ef-824c-8b75e5c64c7b}</UniqueIdentifier>
     </Filter>
