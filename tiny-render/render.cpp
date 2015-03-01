@@ -1,24 +1,23 @@
 #include "stdafx.h"
+#include <random>
 #include "render.h"
 #include "line.h"
 
 namespace sharpeye
 {
-	static gil::rgb8_view_t::point_t to_view( 
-		gil::rgb8_view_t::x_coord_t w, 
-		gil::rgb8_view_t::y_coord_t h, 
-		glm::dvec3 const & v )
+	typedef gil::rgb8_view_t::point_t point_t;
+	typedef gil::rgb8_view_t::x_coord_t x_coord_t;
+	typedef gil::rgb8_view_t::y_coord_t y_coord_t;
+
+	static point_t to_view( x_coord_t w, y_coord_t h, glm::dvec3 const & v )
 	{
-		auto x = static_cast< std::ptrdiff_t >( ( v.x + 1.0 ) * w / 2.0 );
-        auto y = static_cast< std::ptrdiff_t >( ( v.y + 1.0 ) * h / 2.0 );
+		auto x = static_cast< x_coord_t >( ( v.x + 1.0 ) * w / 2.0 );
+        auto y = static_cast< y_coord_t >( ( v.y + 1.0 ) * h / 2.0 );
 
 		return { x, y };
 	}
 
-	static bool in_view( 
-		gil::rgb8_view_t::x_coord_t w, 
-		gil::rgb8_view_t::y_coord_t h, 
-		gil::rgb8_view_t::point_t const & p )
+	static bool in_view( x_coord_t w, y_coord_t h, point_t const & p )
 	{
 		return p.x < w && p.x >= 0 && p.y < h && p.y >= 0;
 	}
@@ -29,33 +28,23 @@ namespace sharpeye
 		return (std::max)( T{}, (std::min)( v, dim - 1 ) );
 	}
 
-	static decltype( auto ) line_x( 
-		gil::rgb8_view_t::point_t::value_type y, 
-		gil::rgb8_view_t::point_t & v0, 
-		gil::rgb8_view_t::point_t & v1 )
+	static x_coord_t line_x( y_coord_t y, point_t & v0, point_t & v1 )
 	{
 		auto const dx = v1.x - v0.x;
 		auto const dy = v1.y - v0.y;
 
-		return static_cast< decltype( y ) >( v0.x + ( y - v0.y ) * dx / (double) dy );
+		return static_cast< x_coord_t >( v0.x + ( y - v0.y ) * dx / (double) dy );
 	}
 
-	static decltype( auto ) line_y( 
-		gil::rgb8_view_t::point_t::value_type x, 
-		gil::rgb8_view_t::point_t & v0, 
-		gil::rgb8_view_t::point_t & v1 )
+	static y_coord_t line_y( x_coord_t x, point_t & v0, point_t & v1 )
 	{
 		auto const dx = v1.x - v0.x;
 		auto const dy = v1.y - v0.y;
 
-		return static_cast< decltype( x ) >( v0.y + ( x - v0.x ) * dy / (double) dx );
+		return static_cast< y_coord_t >( v0.y + ( x - v0.x ) * dy / (double) dx );
 	}
 
-	static void clip_line( 
-		gil::rgb8_view_t::x_coord_t w, 
-		gil::rgb8_view_t::y_coord_t h, 
-		gil::rgb8_view_t::point_t & v0, 
-		gil::rgb8_view_t::point_t & v1 )
+	static void clip_line( x_coord_t w, y_coord_t h, point_t & v0, point_t & v1 )
 	{
 		if( !in_view( w, h, v0 ) ||
 			!in_view( w, h, v1 ) )
@@ -84,7 +73,7 @@ namespace sharpeye
 		}
 	}
 
-	static void draw_wireframe( gil::rgb8_view_t const & view, Model const & model, gil::rgb8_pixel_t const & color )
+	void draw_wireframe( gil::rgb8_view_t const & view, Model const & model, gil::rgb8_pixel_t const & color )
 	{
 		auto const w = view.width();
 		auto const h = view.height();
@@ -112,15 +101,90 @@ namespace sharpeye
 		}
 	}
 
+	static glm::dvec3 barycentric( 
+		point_t const & a, 
+		point_t const & b, 
+		point_t const & c,
+		point_t const & p )
+	{
+		auto u = glm::cross(
+			glm::dvec3( c.x - a.x, b.x - a.x, a.x - p.x ), 
+			glm::dvec3( c.y - a.y, b.y - a.y, a.y - p.y ) );
+
+		if( std::abs( u.z ) < 1 )
+		{
+			return { -1, -1, -1 };
+		}
+    
+		return { 1. - ( u.x + u.y ) / u.z, u.y / u.z, u.x / u.z };
+	}
+
+	static void fill_triangle(
+		gil::rgb8_view_t const & view,
+		point_t const & a, 
+		point_t const & b, 
+		point_t const & c,
+		gil::rgb8_pixel_t const & color )
+	{
+		point_t lt
+		{
+			std::max( 0, std::min( { a.x, b.x, c.x } ) ),
+			std::max( 0, std::min( { a.y, b.y, c.y } ) )
+		};
+
+		point_t rb
+		{
+			std::min( view.width() - 1, std::max( { a.x, b.x, c.x } ) ),
+			std::min( view.height() - 1, std::max( { a.y, b.y, c.y } ) )
+		};
+
+		for( auto i = lt.x; i != rb.x; ++i )
+		{
+			for( auto j = lt.y; j != rb.y; ++j )
+			{
+				point_t p{ i, j };
+				auto u = barycentric( a, b, c, p );
+
+				if( u.x < 0 || u.y < 0 || u.z < 0 )
+				{
+					continue;
+				}
+
+				view( p ) = color;
+			}
+		}
+	}
+
 	void render_model( gil::rgb8_view_t const & view, Model const & model )
 	{
-		draw_wireframe( view, model, { 255, 255, 255 } );
+		std::default_random_engine e;
+		std::uniform_int_distribution<> u{ 0, 255 };
 
-		/*
-		std::clog 
-			<< model.vertices.size() << "\n"
-			<< model.faces.size() 
-			<< std::endl;*/
+		auto const w = view.width();
+		auto const h = view.height();
+
+		for( auto const & face : model.faces )
+		{
+			auto a = to_view( w, h, model.vertices[ face.v[ 0 ] ] );
+			auto b = to_view( w, h, model.vertices[ face.v[ 1 ] ] );
+			auto c = to_view( w, h, model.vertices[ face.v[ 2 ] ] );
+
+			if( !in_view( w, h, a ) ||
+				!in_view( w, h, b ) ||
+				!in_view( w, h, c ) )
+			{
+				continue;
+			}
+
+			gil::rgb8_pixel_t color
+			{
+				static_cast< unsigned char >( u( e ) ),
+				static_cast< unsigned char >( u( e ) ),
+				static_cast< unsigned char >( u( e ) )
+			};			
+
+			fill_triangle( view, a, b, c, color );
+		}
 	}
 
 } // ns sharpeye
