@@ -29,6 +29,7 @@ namespace sharpeye
 			using qi::_a;
 			using qi::_b;
 			using qi::_c;
+			using qi::eps;
 			using boost::phoenix::at_c;
 			using boost::phoenix::push_back;
 
@@ -36,17 +37,32 @@ namespace sharpeye
 
 			index = uint_[ _val = _1 - 1 ];
 
+			// _a - vertex, _b - texture, _c - normal
 			face = lit( 'f' ) >> (
-					index[ at_c< 0 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 0 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 0 >( _c ) = _1 ] ) ) >> 
-					index[ at_c< 1 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 1 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 1 >( _c ) = _1 ] ) ) >> 
-					index[ at_c< 2 >( _a ) = _1 ] >> -( '/' >> index[ at_c< 2 >( _b ) = _1 ] >> -( '/' >> index[ at_c< 2 >( _c ) = _1 ] ) )
-					)[
+					( 
+						index[ at_c< 0 >( _a ) = _1 ] >> index[ at_c< 1 >( _a ) = _1 ] >> index[ at_c< 2 >( _a ) = _1 ] 
+					) |
+					( 
+						index[ at_c< 0 >( _a ) = _1 ] >> '/' >> index[ at_c< 0 >( _b ) = _1 ] >> 
+						index[ at_c< 1 >( _a ) = _1 ] >> '/' >> index[ at_c< 1 >( _b ) = _1 ] >> 
+						index[ at_c< 2 >( _a ) = _1 ] >> '/' >> index[ at_c< 2 >( _b ) = _1 ]
+					) |
+					(
+						index[ at_c< 0 >( _a ) = _1 ] >> "//" >> index[ at_c< 0 >( _c ) = _1 ] >> 
+						index[ at_c< 1 >( _a ) = _1 ] >> "//" >> index[ at_c< 1 >( _c ) = _1 ] >> 
+						index[ at_c< 2 >( _a ) = _1 ] >> "//" >> index[ at_c< 2 >( _c ) = _1 ]
+					) |
+					(
+						index[ at_c< 0 >( _a ) = _1 ] >> '/' >> index[ at_c< 0 >( _b ) = _1 ] >> '/' >> index[ at_c< 0 >( _c ) = _1 ] >> 
+						index[ at_c< 1 >( _a ) = _1 ] >> '/' >> index[ at_c< 1 >( _b ) = _1 ] >> '/' >> index[ at_c< 1 >( _c ) = _1 ] >> 
+						index[ at_c< 2 >( _a ) = _1 ] >> '/' >> index[ at_c< 2 >( _b ) = _1 ] >> '/' >> index[ at_c< 2 >( _c ) = _1 ]
+					) )[
 						at_c< 0 >( _val ) = _a,
 						at_c< 1 >( _val ) = _b,
 						at_c< 2 >( _val ) = _c
 					];
 
-			start = ( 
+			start = (
 					face[ push_back( at_c< 0 >( _val ), _1 ) ] | 
 					vertex[ push_back( at_c< 1 >( _val ), _1 ) ] | 
 					*( qi::char_ - eol ) ) % eol
