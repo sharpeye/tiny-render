@@ -127,4 +127,32 @@ BOOST_AUTO_TEST_CASE( faces_3 )
 	BOOST_REQUIRE( boost::equal( model.faces, fs ) );
 }
 
+BOOST_AUTO_TEST_CASE( faces_4 )
+{
+	Model::Face fs[] = { 
+		Model::Face{ { 6, 10, 30 }, {}, { 35, 24, 17 } },
+		Model::Face{ { 4, 5, 6 }, {}, { 6, 5, 4 } },
+		Model::Face{ { 7, 8, 9 }, {}, { 9, 8, 7 } }
+	};
+
+	std::string s;
+
+	for( auto f : fs  )
+	{
+		s += str( boost::format( "f %d//%d %d//%d %d//%d\n" ) 
+			% ( f.v.x + 1 ) % ( f.n.x + 1 )
+			% ( f.v.y + 1 ) % ( f.n.y + 1 )
+			% ( f.v.z + 1 ) % ( f.n.z + 1 )
+			);
+	}
+
+	std::istringstream iss{ s };
+
+	auto model = load_obj( iss );
+
+	BOOST_REQUIRE( model.vertices.size() == 0 );
+	BOOST_REQUIRE( model.faces.size() == _countof( fs ) );
+	BOOST_REQUIRE( boost::equal( model.faces, fs ) );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
