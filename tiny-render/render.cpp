@@ -157,33 +157,30 @@ namespace sharpeye
 
 	void render_model( gil::rgb8_view_t const & view, Model const & model )
 	{
-		std::default_random_engine e;
-		std::uniform_int_distribution<> u{ 0, 255 };
+		glm::dvec3 const light{ 0, 0, -1 };
 
 		auto const w = view.width();
 		auto const h = view.height();
 
 		for( auto const & face : model.faces )
 		{
-			auto a = to_view( w, h, model.vertices[ face.v[ 0 ] ] );
-			auto b = to_view( w, h, model.vertices[ face.v[ 1 ] ] );
-			auto c = to_view( w, h, model.vertices[ face.v[ 2 ] ] );
+			auto const & v0 = model.vertices[ face.v[ 0 ] ];
+			auto const & v1 = model.vertices[ face.v[ 1 ] ];
+			auto const & v2 = model.vertices[ face.v[ 2 ] ];
 
-			if( !in_view( w, h, a ) ||
-				!in_view( w, h, b ) ||
-				!in_view( w, h, c ) )
+			auto a = to_view( w, h, v0 );
+			auto b = to_view( w, h, v1 );
+			auto c = to_view( w, h, v2 );
+
+			auto n = glm::normalize( glm::cross( v2 - v0, v1 - v0 ) );
+			auto intensity = glm::dot( n, light );
+
+			if( intensity > 0 )
 			{
-				continue;
+				auto color = static_cast< unsigned char >( intensity * 255 );
+
+				fill_triangle( view, a, b, c, { color, color, color } );
 			}
-
-			gil::rgb8_pixel_t color
-			{
-				static_cast< unsigned char >( u( e ) ),
-				static_cast< unsigned char >( u( e ) ),
-				static_cast< unsigned char >( u( e ) )
-			};			
-
-			fill_triangle( view, a, b, c, color );
 		}
 	}
 
