@@ -11,8 +11,8 @@ namespace sharpeye
 
 	static glm::dvec3 to_view( x_coord_t w, y_coord_t h, glm::dvec3 const & v )
 	{
-		auto x = static_cast< x_coord_t >( ( v.x + 1.0 ) * w / 2.0 );
-        auto y = static_cast< y_coord_t >( ( v.y + 1.0 ) * h / 2.0 );
+		auto x = ( v.x + 1.0 ) * w / 2.0;
+		auto y = ( v.y + 1.0 ) * h / 2.0;
 
 		return { x, y, v.z };
 	}
@@ -42,14 +42,14 @@ namespace sharpeye
 	{
 		point_t lt
 		{
-			(std::ptrdiff_t) std::max( std::min( { a.x, b.x, c.x } ), 0.0 ),
-			(std::ptrdiff_t) std::max( std::min( { a.y, b.y, c.y } ), 0.0 )
+			std::max( (std::ptrdiff_t) std::min( { a.x, b.x, c.x } ), 0 ),
+			std::max( (std::ptrdiff_t) std::min( { a.y, b.y, c.y } ), 0 )
 		};
 
 		point_t rb
 		{
-			(std::ptrdiff_t) std::min( std::max( { a.x, b.x, c.x } ), view.width() - 1.0 ),
-			(std::ptrdiff_t) std::min( std::max( { a.y, b.y, c.y } ), view.height() - 1.0 )
+			std::min( (std::ptrdiff_t) std::max( { a.x, b.x, c.x } ), view.width() - 1 ),
+			std::min( (std::ptrdiff_t) std::max( { a.y, b.y, c.y } ), view.height() - 1 )
 		};
 
 		return std::make_pair( lt, rb );
@@ -60,23 +60,29 @@ namespace sharpeye
 		glm::dvec3 const & a, 
 		glm::dvec3 const & b, 
 		glm::dvec3 const & c,
-		gil::rgb8_pixel_t const & color )
+		gil::rgb8_pixel_t const & color,
+		gil::gray32f_view_t const & zbuffer )
 	{
 		auto bbox = calc_bbox( view, a, b, c );
 
-		for( auto i = bbox.first.x; i != bbox.second.x; ++i )
+		for( auto i = bbox.first.x; i <= bbox.second.x; ++i )
 		{
-			for( auto j = bbox.first.y; j != bbox.second.y; ++j )
+			for( auto j = bbox.first.y; j <= bbox.second.y; ++j )
 			{
-				point_t p{ i, j };
-				auto u = barycentric( a, b, c, p );
+				auto u = barycentric( a, b, c, { i, j } );
 
 				if( u.x < 0 || u.y < 0 || u.z < 0 )
 				{
 					continue;
 				}
 
-				view( p ) = color;
+				auto p = a + u.y * ( b - a ) + u.z * ( c - a );
+
+				if( zbuffer( i, j )[ 0 ] < p.z )
+				{
+					zbuffer( i, j )[ 0 ] = (float) p.z;
+					view( i, j ) = color;
+				}
 			}
 		}
 	}
@@ -87,6 +93,10 @@ namespace sharpeye
 
 		auto const w = view.width();
 		auto const h = view.height();
+
+		gil::gray32f_image_t zbuffer( w, h );
+
+		gil::fill_pixels( gil::view( zbuffer ), gil::gray32f_pixel_t{ std::numeric_limits< float >::lowest() } );
 
 		for( auto const & face : model.faces )
 		{
@@ -103,9 +113,9 @@ namespace sharpeye
 
 			if( intensity > 0 )
 			{
-				auto color = static_cast< unsigned char >( intensity * 255 );
+				auto color = static_cast< gil::bits8 >( intensity * 255 );
 
-				fill_triangle( view, a, b, c, { color, color, color } );
+				fill_triangle( view, a, b, c, { color, color, color }, gil::view( zbuffer ) );
 			}
 		}
 	}
