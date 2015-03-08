@@ -2,6 +2,7 @@
 #include <iostream>
 #include <boost/gil/extension/dynamic_image/dynamic_image_all.hpp>
 #include <boost/gil/extension/io/png_io.hpp>
+#include <glm/gtc/matrix_access.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include "render.h"
@@ -14,12 +15,14 @@ int main( int argc, char * argv[] )
 {
 	std::string in;
 	std::string out;
+	bool save_zbuffer = false;
 
 	po::options_description desc( "Options" );
 
 	desc.add_options()
 		( "help", "produce help message" )
 		( "input,i", po::value< std::string >( &in ), "path to model (.obj)" )
+		( "zbuffer,z", po::bool_switch( &save_zbuffer ), "save z-buffer to file (.z.png)" )
 		( "output,o", po::value< std::string >( &out )->default_value( "output.png" ), "path to output (.png)" )
 		;
 
@@ -36,16 +39,20 @@ int main( int argc, char * argv[] )
 			return 1;
 		}
 
-		gil::rgb8_image_t img( 820, 820 );
+		auto const w = 800;
+		auto const h = 800;
+
+		gil::rgb8_image_t img( w, h );
 
 		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 0, 0 } );
 
-		Render render{ gil::subimage_view( gil::view( img ), 10, 10, 800, 800 ) };
+		Render render{ gil::view( img ) };
 
 		render.draw( load_obj( in ) );
 
 		gil::png_write_view( out, gil::flipped_up_down_view( gil::const_view( img ) ) );
 
+		if( save_zbuffer )
 		{
 			auto zbuffer = render.zbuffer();
 			gil::gray8_image_t img( zbuffer.width(), zbuffer.height() );
