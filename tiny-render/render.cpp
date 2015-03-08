@@ -9,6 +9,23 @@ namespace sharpeye
 	typedef gil::rgb8_view_t::x_coord_t x_coord_t;
 	typedef gil::rgb8_view_t::y_coord_t y_coord_t;
 
+	Render::Render( gil::rgb8_view_t const & frame )
+		: _frame( frame )
+		, _zbuffer( frame.width(), frame.height() )
+	{
+		gil::fill_pixels( gil::view( _zbuffer ), gil::gray32f_pixel_t{ std::numeric_limits< float >::lowest() } );
+	}
+
+	gil::gray32f_view_t Render::zbuffer()
+	{
+		return gil::view( _zbuffer );
+	}
+
+	gil::rgb8_view_t Render::frame()
+	{
+		return _frame;
+	}
+
 	static glm::dvec3 to_view( x_coord_t w, y_coord_t h, glm::dvec3 const & v )
 	{
 		auto x = ( v.x + 1.0 ) * w / 2.0;
@@ -27,11 +44,12 @@ namespace sharpeye
 			glm::dvec3( c.x - a.x, b.x - a.x, a.x - p.x ), 
 			glm::dvec3( c.y - a.y, b.y - a.y, a.y - p.y ) );
 
+		/*
 		if( std::abs( u.z ) < 1 )
 		{
 			return { -1, -1, -1 };
-		}
-    
+		}//*/
+
 		return { 1. - ( u.x + u.y ) / u.z, u.y / u.z, u.x / u.z };
 	}
 
@@ -55,15 +73,14 @@ namespace sharpeye
 		return std::make_pair( lt, rb );
 	}
 
-	static void fill_triangle(
-		gil::rgb8_view_t const & view,
+	void Render::fill_triangle(
 		glm::dvec3 const & a, 
 		glm::dvec3 const & b, 
 		glm::dvec3 const & c,
-		gil::rgb8_pixel_t const & color,
-		gil::gray32f_view_t const & zbuffer )
+		gil::rgb8_pixel_t const & color )
 	{
-		auto bbox = calc_bbox( view, a, b, c );
+		auto zbuffer = gil::view( _zbuffer );
+		auto bbox = calc_bbox( _frame, a, b, c );
 
 		for( auto i = bbox.first.x; i <= bbox.second.x; ++i )
 		{
@@ -81,22 +98,20 @@ namespace sharpeye
 				if( zbuffer( i, j )[ 0 ] < p.z )
 				{
 					zbuffer( i, j )[ 0 ] = (float) p.z;
-					view( i, j ) = color;
+					_frame( i, j ) = color;
 				}
 			}
 		}
 	}
 
-	void render_model( gil::rgb8_view_t const & view, Model const & model )
+	void Render::draw( Model const & model )
 	{
+		std::vector< glm::dvec3 > vs;
+
 		glm::dvec3 const light{ 0, 0, -1 };
 
-		auto const w = view.width();
-		auto const h = view.height();
-
-		gil::gray32f_image_t zbuffer( w, h );
-
-		gil::fill_pixels( gil::view( zbuffer ), gil::gray32f_pixel_t{ std::numeric_limits< float >::lowest() } );
+		auto const w = _frame.width();
+		auto const h = _frame.height();
 
 		for( auto const & face : model.faces )
 		{
@@ -115,7 +130,7 @@ namespace sharpeye
 			{
 				auto color = static_cast< gil::bits8 >( intensity * 255 );
 
-				fill_triangle( view, a, b, c, { color, color, color }, gil::view( zbuffer ) );
+				fill_triangle( a, b, c, { color, color, color } );
 			}
 		}
 	}

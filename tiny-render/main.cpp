@@ -3,6 +3,7 @@
 #include <boost/gil/extension/dynamic_image/dynamic_image_all.hpp>
 #include <boost/gil/extension/io/png_io.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem/convenience.hpp>
 #include "render.h"
 #include "obj.h"
 
@@ -39,11 +40,27 @@ int main( int argc, char * argv[] )
 
 		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 0, 0 } );
 
-		render_model( 
-			gil::subimage_view( gil::view( img ), 10, 10, 800, 800 ), 
-			load_obj( in ) );
+		Render render{ gil::subimage_view( gil::view( img ), 10, 10, 800, 800 ) };
+
+		render.draw( load_obj( in ) );
 
 		gil::png_write_view( out, gil::flipped_up_down_view( gil::const_view( img ) ) );
+
+		{
+			auto zbuffer = render.zbuffer();
+			gil::gray8_image_t img( zbuffer.width(), zbuffer.height() );
+
+			gil::transform_pixels( zbuffer, gil::view( img ), []( auto px )
+			{
+				auto v = ( px[ 0 ] + 1.0 ) * 255.0 / 2.0;
+
+				return gil::gray8_pixel_t{ static_cast< gil::bits8 >( std::min( 255.0, std::max( 0.0, v ) ) ) };
+			} );
+
+			auto fn = boost::filesystem::change_extension( out, ".z.png" );
+
+			gil::png_write_view( fn.string(), gil::flipped_up_down_view( gil::const_view( img ) ) );
+		}
 
 		return 0;
 	}
