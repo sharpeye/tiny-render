@@ -2,7 +2,7 @@
 #include <iostream>
 #include <boost/gil/extension/dynamic_image/dynamic_image_all.hpp>
 #include <boost/gil/extension/io/png_io.hpp>
-#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include "render.h"
@@ -44,11 +44,16 @@ int main( int argc, char * argv[] )
 
 		gil::rgb8_image_t img( w, h );
 
-		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 0, 0 } );
+		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 100, 0 } );
 
 		Render render{ gil::view( img ) };
 
-		render.draw( load_obj( in ) );
+		auto model = load_obj( in );
+		model.m = glm::dmat4{ 1.0 };
+		
+		//model.m = glm::rotate( glm::dmat4{ 1.0 }, -30.0, glm::dvec3{ 0, 1, 0 } );
+
+		render.draw( model );
 
 		gil::png_write_view( out, gil::flipped_up_down_view( gil::const_view( img ) ) );
 

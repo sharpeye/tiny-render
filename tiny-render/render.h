@@ -20,7 +20,7 @@ namespace sharpeye
 			glm::dvec3 const & a,
 			glm::dvec3 const & b,
 			glm::dvec3 const & c,
-			gil::rgb8_pixel_t const & color );
+			glm::dvec3 const & intensity );
 
 	private:
 		gil::rgb8_view_t _frame;

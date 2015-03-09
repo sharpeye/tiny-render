@@ -18,6 +18,9 @@ namespace sharpeye
 
 		std::vector< Face > faces;
 		std::vector< Vertex > vertices;
+		std::vector< Vertex > normals;
+
+		glm::dmat4 m;
 
 	}; // Model
 

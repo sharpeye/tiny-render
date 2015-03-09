@@ -8,7 +8,11 @@
 BOOST_FUSION_ADAPT_STRUCT( glm::dvec3, (double, x) (double, y) (double, z) )
 BOOST_FUSION_ADAPT_STRUCT( glm::uvec3, (unsigned, x) (unsigned, y) (unsigned, z) )
 BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model::Face, (glm::uvec3, v) (glm::uvec3, t) (glm::uvec3, n) )
-BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model, (std::vector< sharpeye::Model::Face >, faces) (std::vector< sharpeye::Model::Vertex >, vertices) )
+BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model, 
+	(std::vector< sharpeye::Model::Face >, faces) 
+	(std::vector< sharpeye::Model::Vertex >, vertices)
+	(std::vector< sharpeye::Model::Vertex >, normals)
+)
 
 namespace sharpeye
 {
@@ -32,10 +36,17 @@ namespace sharpeye
 			using qi::eps;
 			using boost::phoenix::at_c;
 			using boost::phoenix::push_back;
+			using boost::phoenix::bind;
 
 			vertex = lit( 'v' ) >> double_ >> double_ >> double_;
+			normal = lit( "vn" ) >> double_ >> double_ >> double_;
 
 			index = uint_[ _val = _1 - 1 ];
+
+			auto normalize = []( glm::dvec3 const & v )
+			{
+				return glm::normalize( v );
+			};
 
 			// _a - vertex, _b - texture, _c - normal
 			face = lit( 'f' ) >> (
@@ -63,8 +74,9 @@ namespace sharpeye
 					];
 
 			start = (
-					face[ push_back( at_c< 0 >( _val ), _1 ) ] | 
-					vertex[ push_back( at_c< 1 >( _val ), _1 ) ] | 
+					face[ push_back( at_c< 0 >( _val ), _1 ) ] |
+					vertex[ push_back( at_c< 1 >( _val ), _1 ) ] |
+					normal[ push_back( at_c< 2 >( _val ), bind( normalize, _1 ) ) ] |
 					*( qi::char_ - eol ) ) % eol
 				| eol;
 		}
@@ -73,6 +85,7 @@ namespace sharpeye
 		qi::rule< Iterator, void(), ascii::blank_type > line;
 		qi::rule< Iterator, unsigned() > index;
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > vertex;
+		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > normal;
 		qi::rule< Iterator, Model::Face (), ascii::blank_type, qi::locals< glm::uvec3, glm::uvec3, glm::uvec3 > > face;
 
 	}; // obj_parser
