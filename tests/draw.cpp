@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include <sstream>
 #include <boost/test/unit_test.hpp>
-#include "../tiny-render/line.h"
+#include <tiny-render/line.h>
 
 using namespace sharpeye;
 

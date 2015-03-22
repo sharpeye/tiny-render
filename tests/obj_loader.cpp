@@ -4,7 +4,7 @@
 #include <boost/range/algorithm/equal.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/format.hpp>
-#include "../tiny-render/obj.h"
+#include <tiny-render/obj.h>
 
 using namespace sharpeye;
 

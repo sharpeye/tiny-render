@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "model.h"
+#include <tiny-render/model.h>
 
 namespace sharpeye
 {

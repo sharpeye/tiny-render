@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include <random>
 #include <glm/gtc/matrix_transform.hpp>
-#include "render.h"
-#include "line.h"
+#include <tiny-render/render.h>
 
 namespace sharpeye
 {

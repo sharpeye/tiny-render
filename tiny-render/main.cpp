@@ -5,8 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem/convenience.hpp>
-#include "render.h"
-#include "obj.h"
+#include <tiny-render/render.h>
+#include <tiny-render/obj.h>
 
 using namespace sharpeye;
 namespace po = boost::program_options;

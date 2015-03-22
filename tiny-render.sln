@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tiny-render", "tiny-render\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tests", "tests\tests.vcxproj", "{DA23D9A4-2E47-4C5A-A1C7-CAFEC7D86ACD}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "render", "render\render.vcxproj", "{5B7DC008-82A2-4164-8973-E42C7BE80CFB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,10 @@ Global
 		{DA23D9A4-2E47-4C5A-A1C7-CAFEC7D86ACD}.Debug|Win32.Build.0 = Debug|Win32
 		{DA23D9A4-2E47-4C5A-A1C7-CAFEC7D86ACD}.Release|Win32.ActiveCfg = Release|Win32
 		{DA23D9A4-2E47-4C5A-A1C7-CAFEC7D86ACD}.Release|Win32.Build.0 = Release|Win32
+		{5B7DC008-82A2-4164-8973-E42C7BE80CFB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5B7DC008-82A2-4164-8973-E42C7BE80CFB}.Debug|Win32.Build.0 = Debug|Win32
+		{5B7DC008-82A2-4164-8973-E42C7BE80CFB}.Release|Win32.ActiveCfg = Release|Win32
+		{5B7DC008-82A2-4164-8973-E42C7BE80CFB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

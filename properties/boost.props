@@ -3,7 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <IncludePath>D:\cpp\glm-0.9.5.4\glm;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)3th-party\boost_1_57_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)3th-party\boost_1_57_0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup />
   <ItemGroup />

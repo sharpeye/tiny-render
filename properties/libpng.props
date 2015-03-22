@@ -3,8 +3,8 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <LibraryPath>D:\cpp\libpng\lpng1616\projects\vstudio\$(Configuration);$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\cpp\libpng\lpng1616;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)3th-party\lpng1616\projects\vstudio\$(Configuration);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)3th-party\lpng1616;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

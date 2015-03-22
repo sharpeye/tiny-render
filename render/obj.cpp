@@ -3,7 +3,7 @@
 #include <iterator>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/phoenix.hpp>
-#include "obj.h"
+#include <tiny-render/obj.h>
 
 BOOST_FUSION_ADAPT_STRUCT( glm::dvec3, (double, x) (double, y) (double, z) )
 BOOST_FUSION_ADAPT_STRUCT( glm::uvec3, (unsigned, x) (unsigned, y) (unsigned, z) )

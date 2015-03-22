@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Model">
+      <UniqueIdentifier>{df3154c8-b59d-4316-8b26-6fd726a610f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Obj">
+      <UniqueIdentifier>{5b6e11dc-ae21-46ff-9de5-e0e004246134}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{29d736d4-27c2-46b0-b19a-833a85f49e8c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -24,13 +33,31 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\tiny-render\model.h">
+      <Filter>Model</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tiny-render\obj.h">
+      <Filter>Obj</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tiny-render\render.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="include\tiny-render\line.h">
+      <Filter>Render</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="model.cpp">
+      <Filter>Model</Filter>
+    </ClCompile>
+    <ClCompile Include="obj.cpp">
+      <Filter>Obj</Filter>
+    </ClCompile>
+    <ClCompile Include="render.cpp">
+      <Filter>Render</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 
 #include <string>
 #include <istream>
-#include "model.h"
+#include <tiny-render/model.h>
 
 namespace sharpeye
 {

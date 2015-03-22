@@ -32,9 +32,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\tiny-render\obj.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="obj_loader.cpp">
       <Filter>tests</Filter>
     </ClCompile>
@@ -43,9 +40,6 @@
     </ClCompile>
     <ClCompile Include="draw.cpp">
       <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\tiny-render\model.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
