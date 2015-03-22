@@ -48,10 +48,14 @@ int main( int argc, char * argv[] )
 
 		Render render{ gil::view( img ) };
 
+		render.set_view_matrix( glm::lookAt( 
+			glm::dvec3{ 1, 1, 3 }, 
+			glm::dvec3{ 0, 0, 0 },
+			glm::dvec3{ 0, 1, 0 } ) );
+
+		render.set_proj_matrix( glm::perspective( 45.0, w / (double) h, 1.0, 10.0 ) );
+
 		auto model = load_obj( in );
-		model.m = glm::dmat4{ 1.0 };
-		
-		//model.m = glm::rotate( glm::dmat4{ 1.0 }, -30.0, glm::dvec3{ 0, 1, 0 } );
 
 		render.draw( model );
 
@@ -64,7 +68,7 @@ int main( int argc, char * argv[] )
 
 			gil::transform_pixels( zbuffer, gil::view( img ), []( auto px )
 			{
-				auto v = ( px[ 0 ] + 1.0 ) * 255.0 / 2.0;
+				auto v = ( 1 - px[ 0 ] ) * 255.0 / 2.0;
 
 				return gil::gray8_pixel_t{ static_cast< gil::bits8 >( std::min( 255.0, std::max( 0.0, v ) ) ) };
 			} );

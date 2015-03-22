@@ -15,6 +15,9 @@ namespace sharpeye
 		gil::rgb8_view_t frame();
 		gil::gray32f_view_t zbuffer();
 
+		void set_view_matrix( glm::dmat4 const & m );
+		void set_proj_matrix( glm::dmat4 const & m );
+
 	private:
 		void fill_triangle(
 			glm::dvec3 const & a,
@@ -25,6 +28,9 @@ namespace sharpeye
 	private:
 		gil::rgb8_view_t _frame;
 		gil::gray32f_image_t _zbuffer;
+
+		glm::dmat4 _proj;
+		glm::dmat4 _view;
 
 	}; // Render
 

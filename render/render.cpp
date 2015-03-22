@@ -11,7 +11,7 @@ namespace sharpeye
 		: _frame{ frame }
 		, _zbuffer{ frame.width(), frame.height() }
 	{
-		gil::fill_pixels( gil::view( _zbuffer ), gil::gray32f_pixel_t{ std::numeric_limits< float >::lowest() } );
+		gil::fill_pixels( gil::view( _zbuffer ), gil::gray32f_pixel_t{ 2.0f } );
 	}
 
 	gil::gray32f_view_t Render::zbuffer()
@@ -22,6 +22,61 @@ namespace sharpeye
 	gil::rgb8_view_t Render::frame()
 	{
 		return _frame;
+	}
+
+	void Render::set_view_matrix( glm::dmat4 const & m )
+	{
+		_view = m;
+	}
+
+	void Render::set_proj_matrix( glm::dmat4 const & m )
+	{
+		_proj = m;
+	}
+
+	static glm::dmat4 calc_viewport( double x, double y, double w, double h )
+	{
+		glm::dmat4 m{ 1.0 };
+
+		m[ 3 ][ 0 ] = x + w / 2.0;
+		m[ 3 ][ 1 ] = y + h / 2.0;
+		m[ 3 ][ 2 ] = 0;
+
+		m[ 0 ][ 0 ] = w / 2.0;
+		m[ 1 ][ 1 ] = h / 2.0;
+		m[ 2 ][ 2 ] = 1;
+
+		return m;
+	}
+
+	static glm::dmat4 calc_viewport( gil::rgb8_view_t const & frame )
+	{
+		auto const w = frame.width();
+		auto const h = frame.height();
+
+		return calc_viewport( 0, 0, w, h );
+	}
+
+	static glm::dmat4 calc_proj( double k )
+	{
+		glm::dmat4 mat{ 1.0 };
+		mat[ 2 ][ 3 ] = k;
+		return mat;
+	}
+
+	static glm::dvec3 to_view( glm::dvec3 const & p, glm::dmat4 const & m )
+	{
+		auto v = m * glm::dvec4{ p, 1 };
+		v.x /= v.w;
+		v.y /= v.w;
+		v.z /= v.w;
+
+		return glm::dvec3{ v };
+	}
+
+	static double calc_intensity( glm::dvec3 const & light, glm::dmat4 const & m, glm::dvec3 const & n )
+	{
+		return std::max( glm::dot( glm::dvec3{ m * glm::dvec4{ n, 0 } }, light ), 0.0 );
 	}
 
 	static glm::dvec3 barycentric( 
@@ -80,15 +135,20 @@ namespace sharpeye
 					continue;
 				}
 
-				auto p = static_cast< float >( a.z + u.y * ( b - a ).z + u.z * ( c - a ).z );
+				auto p = static_cast< float >( glm::dot( glm::dvec3{ a.z, b.z, c.z }, u ) );
+
+				if( std::abs( p ) > 1 )
+				{
+					continue;
+				}
 
 				auto & z = zbuffer( i, j )[ 0 ];
 
-				if( z < p )
+				if( z > p )
 				{
 					z = p;
 
-					auto val = intensity.x * u.x + intensity.y * u.y + intensity.z * u.z;
+					auto val = std::min( 1.0, std::max( 0.0, glm::dot( intensity, u ) ) );
 					auto color = (gil::bits8) ( val * 255 );
 
 					_frame( i, j ) = { color, color, color };
@@ -97,88 +157,20 @@ namespace sharpeye
 		}
 	}
 
-	static glm::dmat4 calc_viewport( double x, double y, double w, double h )
-	{
-		glm::dmat4 m{ 1.0 };
-
-		m[ 3 ][ 0 ] = x + w / 2.0;
-		m[ 3 ][ 1 ] = y + h / 2.0;
-		m[ 3 ][ 2 ] = 0;
-
-		m[ 0 ][ 0 ] = w / 2.0;
-		m[ 1 ][ 1 ] = h / 2.0;
-		m[ 2 ][ 2 ] = 1;
-
-		return m;
-	}
-
-	static glm::dmat4 calc_viewport( gil::rgb8_view_t const & frame )
-	{
-		auto const w = frame.width();
-		auto const h = frame.height();
-
-		return calc_viewport( w / 8.0, h / 8.0, w * 3.0 / 4, h * 3.0 / 4 );
-	}
-
-	static glm::dmat4 calc_proj( double k )
-	{
-		glm::dmat4 mat{ 1.0 };
-		mat[ 2 ][ 3 ] = k;
-		return mat;
-	}
-
-	static glm::dvec3 to_view( glm::dvec3 const & p, glm::dmat4 const & m )
-	{
-		auto v = m * glm::dvec4{ p, 1 };
-		v.x /= v.w;
-		v.y /= v.w;
-		v.z /= v.w;
-
-		return glm::dvec3{ v };
-	}
-
-	static glm::dmat4 look_at( glm::dvec3 const & eye, glm::dvec3 const & center, glm::dvec3 const & up )
-	{
-		auto z = glm::normalize( eye - center );
-		auto x = glm::normalize( glm::cross( up, z ) );
-		auto y = glm::normalize( glm::cross( z, x ) );
-
-		glm::dmat4 m{ 1.0 };
-
-		for( int i = 0; i < 3; i++ )
-		{
-			m[ i ][ 0 ] = x[ i ];
-			m[ i ][ 1 ] = y[ i ];
-			m[ i ][ 2 ] = z[ i ];
-		}
-
-		return glm::translate( m, -center );
-	}
-
-	static double calc_intensity( glm::dvec3 const & light, glm::dmat4 const & m, glm::dvec3 const & n )
-	{
-		return std::max( glm::dot( glm::dvec3{ m * glm::dvec4{ n, 0 } }, light ), 0.0 );
-	}
-
 	void Render::draw( Model const & model )
 	{
-		glm::dvec3 const eye{ 1, 1, 3 };
-		glm::dvec3 const center{ 0, 0, 0 };
-		glm::dvec3 const up{ 0, 1, 0 };
+		double const w = _frame.width();
+		double const h = _frame.height();
 
-		glm::dmat4 const proj = calc_proj( -1.0 / glm::length( eye - center ) );
 		glm::dmat4 const viewport = calc_viewport( _frame );
-		glm::dmat4 const model_view = look_at( eye, center, up );
+		glm::dmat4 const model_view = _view * model.m;
 
-		auto const w = _frame.width();
-		auto const h = _frame.height();
-
-		glm::dvec3 const light = glm::normalize( glm::dvec3{ proj * model_view * glm::dvec4{
+		glm::dvec3 const light = glm::normalize( glm::dvec3{ _proj * model_view * glm::dvec4{
 			1, 1, 1, 0  // why not (-1,-1,-1) ?
 		} } );
 
-		auto const m = viewport * proj * model_view;
-		auto const fix_normal = glm::transpose( glm::inverse( proj * model_view ) );
+		auto const m = viewport * _proj * model_view;
+		auto const normal_mtx = glm::transpose( glm::inverse( _proj * model_view ) );
 
 		for( auto const & face : model.faces )
 		{
@@ -192,9 +184,9 @@ namespace sharpeye
 
 			glm::dvec3 intensity
 			{
-				calc_intensity( light, fix_normal, n0 ),
-				calc_intensity( light, fix_normal, n1 ),
-				calc_intensity( light, fix_normal, n2 )
+				calc_intensity( light, normal_mtx, n0 ),
+				calc_intensity( light, normal_mtx, n1 ),
+				calc_intensity( light, normal_mtx, n2 )
 			};
 
 			auto a = to_view( v0, m );
