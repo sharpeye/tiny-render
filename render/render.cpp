@@ -10,6 +10,7 @@ namespace sharpeye
 	Render::Render( gil::rgb8_view_t const & frame )
 		: _frame{ frame }
 		, _zbuffer{ frame.width(), frame.height() }
+		, _light{ -1, -1, -1, 0 }
 	{
 		gil::fill_pixels( gil::view( _zbuffer ), gil::gray32f_pixel_t{ 2.0f } );
 	}
@@ -32,6 +33,11 @@ namespace sharpeye
 	void Render::set_proj_matrix( glm::dmat4 const & m )
 	{
 		_proj = m;
+	}
+
+	void Render::set_light_dir( glm::dvec3 const & v )
+	{
+		_light = glm::dvec4{ v, 0 };
 	}
 
 	static glm::dmat4 calc_viewport( double x, double y, double w, double h )
@@ -112,12 +118,35 @@ namespace sharpeye
 		return std::make_pair( lt, rb );
 	}
 
-	void Render::fill_triangle(
-		glm::dvec3 const & a, 
-		glm::dvec3 const & b, 
-		glm::dvec3 const & c,
-		glm::dvec3 const & intensity )
+	static glm::dvec3 proj( glm::dvec4 const & v )
 	{
+		return glm::dvec3{ v } / v.w;
+	}
+
+	static glm::dvec3 as_vec( gil::rgb8_pixel_t const & p )
+	{
+		return { p[ 0 ], p[ 1 ], p[ 2 ] };
+	}
+
+	static gil::rgb8_pixel_t as_px( glm::dvec3 const & v )
+	{
+		return 
+		{
+			(gil::bits8) v.x,
+			(gil::bits8) v.y,
+			(gil::bits8) v.z
+		};
+	}
+
+	void Render::fill_triangle(
+		glm::dmat3x4 const & vs,
+		glm::dmat3 const & ts,
+		glm::dvec3 const & lum )
+	{
+		auto a = proj( vs[ 0 ] );
+		auto b = proj( vs[ 1 ] );
+		auto c = proj( vs[ 2 ] );
+
 		auto zbuffer = gil::view( _zbuffer );
 
 		point_t lt;
@@ -128,14 +157,14 @@ namespace sharpeye
 		{
 			for( auto j = lt.y; j <= rb.y; ++j )
 			{
-				auto u = barycentric( a, b, c, { i, j } );
+				auto bc = barycentric( a, b, c, { i, j } );
 
-				if( u.x < 0 || u.y < 0 || u.z < 0 )
+				if( bc.x < 0 || bc.y < 0 || bc.z < 0 )
 				{
 					continue;
 				}
 
-				auto p = static_cast< float >( glm::dot( glm::dvec3{ a.z, b.z, c.z }, u ) );
+				auto p = glm::dot( glm::dvec3{ a.z, b.z, c.z }, bc );
 
 				if( std::abs( p ) > 1 )
 				{
@@ -146,15 +175,31 @@ namespace sharpeye
 
 				if( z > p )
 				{
-					z = p;
+					z = (float) p;
 
-					auto val = std::min( 1.0, std::max( 0.0, glm::dot( intensity, u ) ) );
-					auto color = (gil::bits8) ( val * 255 );
+					auto val = std::min( 1.0, std::max( 0.0, glm::dot( lum, bc ) ) );
 
-					_frame( i, j ) = { color, color, color };
+					auto uv = ts[ 0 ] * bc[ 0 ] + ts[ 1 ] * bc[ 1 ] + ts[ 2 ] * bc[ 2 ];
+
+					auto u = (int) ( uv.x * _diff.width() );
+					auto v = (int) ( ( 1 - uv.y ) * _diff.height() );
+
+					auto color = as_px( as_vec( _diff( u, v ) ) * val );
+
+					_frame( i, j ) = color;
 				}
 			}
 		}
+	}
+
+	void Render::set_diffuse_map( gil::rgb8_view_t img )
+	{
+		_diff = img;
+	}
+
+	static glm::dvec4 mul( glm::dmat4 const & m, glm::dvec3 const & v )
+	{
+		return m * glm::dvec4{ v, 1 };
 	}
 
 	void Render::draw( Model const & model )
@@ -164,10 +209,7 @@ namespace sharpeye
 
 		glm::dmat4 const viewport = calc_viewport( _frame );
 		glm::dmat4 const model_view = _view * model.m;
-
-		glm::dvec3 const light = glm::normalize( glm::dvec3{ _proj * model_view * glm::dvec4{
-			1, 1, 1, 0  // why not (-1,-1,-1) ?
-		} } );
+		glm::dvec3 const light = glm::normalize( glm::dvec3{ _proj * model_view * -_light } );
 
 		auto const m = viewport * _proj * model_view;
 		auto const normal_mtx = glm::transpose( glm::inverse( _proj * model_view ) );
@@ -182,18 +224,28 @@ namespace sharpeye
 			auto const & n1 = model.normals[ face.n[ 1 ] ];
 			auto const & n2 = model.normals[ face.n[ 2 ] ];
 
-			glm::dvec3 intensity
+			glm::dvec3 lum
 			{
 				calc_intensity( light, normal_mtx, n0 ),
 				calc_intensity( light, normal_mtx, n1 ),
 				calc_intensity( light, normal_mtx, n2 )
 			};
 
-			auto a = to_view( v0, m );
-			auto b = to_view( v1, m );
-			auto c = to_view( v2, m );
+			glm::dmat3x4 vs
+			{ 
+				mul( m, v0 ), 
+				mul( m, v1 ), 
+				mul( m, v2 )
+			};
 
-			fill_triangle( a, b, c, intensity );
+			glm::dmat3 ts
+			{
+				model.uv[ face.t[ 0 ] ],
+				model.uv[ face.t[ 1 ] ],
+				model.uv[ face.t[ 2 ] ]
+			};
+
+			fill_triangle( vs, ts, lum );
 		}
 	}
 

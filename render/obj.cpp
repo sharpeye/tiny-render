@@ -12,6 +12,7 @@ BOOST_FUSION_ADAPT_STRUCT( sharpeye::Model,
 	(std::vector< sharpeye::Model::Face >, faces) 
 	(std::vector< sharpeye::Model::Vertex >, vertices)
 	(std::vector< sharpeye::Model::Vertex >, normals)
+	(std::vector< sharpeye::Model::Vertex >, uv)
 )
 
 namespace sharpeye
@@ -40,6 +41,7 @@ namespace sharpeye
 
 			vertex = lit( 'v' ) >> double_ >> double_ >> double_;
 			normal = lit( "vn" ) >> double_ >> double_ >> double_;
+			uv = lit( "vt" ) >> double_ >> double_ >> -double_;
 
 			index = uint_[ _val = _1 - 1 ];
 
@@ -77,6 +79,7 @@ namespace sharpeye
 					face[ push_back( at_c< 0 >( _val ), _1 ) ] |
 					vertex[ push_back( at_c< 1 >( _val ), _1 ) ] |
 					normal[ push_back( at_c< 2 >( _val ), bind( normalize, _1 ) ) ] |
+					uv[ push_back( at_c< 3 >( _val ), _1 ) ] |
 					*( qi::char_ - eol ) ) % eol
 				| eol;
 		}
@@ -86,6 +89,7 @@ namespace sharpeye
 		qi::rule< Iterator, unsigned() > index;
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > vertex;
 		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > normal;
+		qi::rule< Iterator, Model::Vertex (), ascii::blank_type > uv;
 		qi::rule< Iterator, Model::Face (), ascii::blank_type, qi::locals< glm::uvec3, glm::uvec3, glm::uvec3 > > face;
 
 	}; // obj_parser

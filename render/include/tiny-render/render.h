@@ -17,13 +17,14 @@ namespace sharpeye
 
 		void set_view_matrix( glm::dmat4 const & m );
 		void set_proj_matrix( glm::dmat4 const & m );
+		void set_light_dir( glm::dvec3 const & v );
+		void set_diffuse_map( gil::rgb8_view_t img );
 
 	private:
 		void fill_triangle(
-			glm::dvec3 const & a,
-			glm::dvec3 const & b,
-			glm::dvec3 const & c,
-			glm::dvec3 const & intensity );
+			glm::dmat3x4 const & vs,
+			glm::dmat3 const & ts,
+			glm::dvec3 const & lum );
 
 	private:
 		gil::rgb8_view_t _frame;
@@ -31,6 +32,9 @@ namespace sharpeye
 
 		glm::dmat4 _proj;
 		glm::dmat4 _view;
+		glm::dvec4 _light;
+
+		gil::rgb8_view_t _diff;
 
 	}; // Render
 

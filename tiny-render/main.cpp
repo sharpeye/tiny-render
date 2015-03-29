@@ -11,6 +11,15 @@
 using namespace sharpeye;
 namespace po = boost::program_options;
 
+static void load_map( boost::filesystem::path const & base, std::string const & postfix, gil::rgb8_image_t & map )
+{
+	auto filename = change_extension( 
+		base.parent_path() / ( base.filename().stem().string() + postfix ), 
+		".png" );
+
+	gil::png_read_image( filename.string(), map );
+}
+
 int main( int argc, char * argv[] )
 {
 	std::string in;
@@ -43,6 +52,11 @@ int main( int argc, char * argv[] )
 		auto const h = 800;
 
 		gil::rgb8_image_t img( w, h );
+		gil::rgb8_image_t diffuse_map;
+		gil::rgb8_image_t normal_map;
+
+		load_map( in, "_diffuse", diffuse_map );
+		//load_map( in, "_normal", normal_map );
 
 		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 100, 0 } );
 
@@ -57,6 +71,8 @@ int main( int argc, char * argv[] )
 
 		auto model = load_obj( in );
 
+		render.set_diffuse_map( gil::view( diffuse_map ) );
+		//render.set_normal_map( gil::view( normal_map ) );
 		render.draw( model );
 
 		gil::png_write_view( out, gil::flipped_up_down_view( gil::const_view( img ) ) );
