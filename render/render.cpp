@@ -5,12 +5,19 @@
 
 namespace sharpeye
 {
-	typedef gil::rgb8_view_t::point_t point_t;
+	using point_t = gil::rgb8_view_t::point_t;
+	using x_coord_t = gil::rgb8_view_t::x_coord_t;
+	using y_coord_t = gil::rgb8_view_t::y_coord_t;
+
+	static double clip( double v )
+	{
+		return std::min( 1.0, std::max( 0.0, v ) );
+	}
 
 	Render::Render( gil::rgb8_view_t const & frame )
 		: _frame{ frame }
 		, _zbuffer{ frame.width(), frame.height() }
-		, _light{ -1, -1, -1, 0 }
+		, _light{ 1, 1, 1 }
 	{
 		gil::fill_pixels( gil::view( _zbuffer ), gil::gray32f_pixel_t{ 2.0f } );
 	}
@@ -37,7 +44,7 @@ namespace sharpeye
 
 	void Render::set_light_dir( glm::dvec3 const & v )
 	{
-		_light = glm::dvec4{ v, 0 };
+		_light = -v;
 	}
 
 	static glm::dmat4 calc_viewport( double x, double y, double w, double h )
@@ -63,26 +70,19 @@ namespace sharpeye
 		return calc_viewport( 0, 0, w, h );
 	}
 
-	static glm::dmat4 calc_proj( double k )
+	static glm::dvec3 mul_v( glm::dmat4 const & m, glm::dvec3 const & v )
 	{
-		glm::dmat4 mat{ 1.0 };
-		mat[ 2 ][ 3 ] = k;
-		return mat;
+		return glm::dvec3{ m * glm::dvec4{ v, 0 } };
 	}
 
-	static glm::dvec3 to_view( glm::dvec3 const & p, glm::dmat4 const & m )
+	static glm::dvec4 mul( glm::dmat4 const & m, glm::dvec3 const & v )
 	{
-		auto v = m * glm::dvec4{ p, 1 };
-		v.x /= v.w;
-		v.y /= v.w;
-		v.z /= v.w;
-
-		return glm::dvec3{ v };
+		return m * glm::dvec4{ v, 1 };
 	}
 
-	static double calc_intensity( glm::dvec3 const & light, glm::dmat4 const & m, glm::dvec3 const & n )
+	static glm::dvec3 proj( glm::dvec4 const & v )
 	{
-		return std::max( glm::dot( glm::dvec3{ m * glm::dvec4{ n, 0 } }, light ), 0.0 );
+		return glm::dvec3{ v } / v.w;
 	}
 
 	static glm::dvec3 barycentric( 
@@ -98,56 +98,67 @@ namespace sharpeye
 		return { 1. - ( u.x + u.y ) / u.z, u.y / u.z, u.x / u.z };
 	}
 
-	auto calc_bbox( gil::rgb8_view_t const & view,
+	static glm::dvec3 correct_barycentric( glm::dvec3 const & bc, double w1, double w2, double w3 )
+	{
+		auto wp = 1.0 / ( bc[ 0 ] / w1 + bc[ 1 ] / w2 + bc[ 2 ] / w3 );
+
+		return 
+		{
+			bc[ 0 ] * wp / w1,
+			bc[ 1 ] * wp / w2,
+			bc[ 2 ] * wp / w3
+		};
+	}
+
+	decltype(auto) calc_bbox( gil::rgb8_view_t const & view,
 		glm::dvec3 const & a, 
 		glm::dvec3 const & b, 
 		glm::dvec3 const & c )
 	{
 		point_t lt
 		{
-			std::max( (std::ptrdiff_t) std::min( { a.x, b.x, c.x } ), 0 ),
-			std::max( (std::ptrdiff_t) std::min( { a.y, b.y, c.y } ), 0 )
+			std::max( (x_coord_t) std::min( { a.x, b.x, c.x } ), 0 ),
+			std::max( (y_coord_t) std::min( { a.y, b.y, c.y } ), 0 )
 		};
 
 		point_t rb
 		{
-			std::min( (std::ptrdiff_t) std::max( { a.x, b.x, c.x } ), view.width() - 1 ),
-			std::min( (std::ptrdiff_t) std::max( { a.y, b.y, c.y } ), view.height() - 1 )
+			std::min( (x_coord_t) std::max( { a.x, b.x, c.x } ), view.width() - 1 ),
+			std::min( (y_coord_t) std::max( { a.y, b.y, c.y } ), view.height() - 1 )
 		};
 
 		return std::make_pair( lt, rb );
 	}
 
-	static glm::dvec3 proj( glm::dvec4 const & v )
-	{
-		return glm::dvec3{ v } / v.w;
-	}
-
-	static glm::dvec3 as_vec( gil::rgb8_pixel_t const & p )
-	{
-		return { p[ 0 ], p[ 1 ], p[ 2 ] };
-	}
-
-	static gil::rgb8_pixel_t as_px( glm::dvec3 const & v )
+	static gil::rgb8_pixel_t calc_color( gil::rgb8_pixel_t const & px, double lum )
 	{
 		return 
 		{
-			(gil::bits8) v.x,
-			(gil::bits8) v.y,
-			(gil::bits8) v.z
+			(gil::bits8) ( px[ 0 ] * lum ),
+			(gil::bits8) ( px[ 1 ] * lum ),
+			(gil::bits8) ( px[ 2 ] * lum )
 		};
 	}
 
-	static glm::dvec3 correct_barycentric( glm::dvec3 const & bc, glm::dvec3 const & w )
+	static gil::rgb8_pixel_t pixel( gil::rgb8_view_t const & view, glm::dvec3 const & uv )
 	{
-		auto wp = 1.0 / ( bc[ 0 ] / w[ 0 ] + bc[ 1 ] / w[ 1 ] + bc[ 2 ] / w[ 2 ] );
-
-		return 
+		point_t location
 		{
-			bc[ 0 ] * wp / w[ 0 ],
-			bc[ 1 ] * wp / w[ 1 ],
-			bc[ 2 ] * wp / w[ 2 ]
+			(x_coord_t) ( uv.x * ( view.width() - 1 ) ),
+			(y_coord_t) ( ( 1 - uv.y ) * ( view.height() - 1 ) )
 		};
+
+		return view( location );
+	}
+
+	static double interpolate( glm::dvec3 const & bc, glm::dvec3 const & v )
+	{
+		return glm::dot( v, bc );
+	}
+
+	static glm::dvec3 interpolate( glm::dvec3 const & bc, glm::dmat3 const & m )
+	{
+		return m[ 0 ] * bc[ 0 ] + m[ 1 ] * bc[ 1 ] + m[ 2 ] * bc[ 2 ];
 	}
 
 	void Render::fill_triangle(
@@ -176,7 +187,7 @@ namespace sharpeye
 					continue;
 				}
 
-				auto p = glm::dot( glm::dvec3{ a.z, b.z, c.z }, bc );
+				auto p = interpolate( bc, { a.z, b.z, c.z } );
 
 				if( std::abs( p ) > 1 )
 				{
@@ -190,22 +201,15 @@ namespace sharpeye
 					z = (float) p;
 
 					auto cbc = correct_barycentric( bc, 
-						{ 
 							vs[ 0 ][ 3 ], 
 							vs[ 1 ][ 3 ], 
 							vs[ 2 ][ 3 ] 
-					} );
+						);
 
-					auto val = std::min( 1.0, std::max( 0.0, glm::dot( lum, bc ) ) );
+					auto uv = interpolate( cbc, ts );
+					auto intensity = interpolate( cbc, lum );
 
-					auto uv = ts[ 0 ] * cbc[ 0 ] + ts[ 1 ] * cbc[ 1 ] + ts[ 2 ] * cbc[ 2 ];
-
-					auto u = (int) ( uv.x * ( _diff.width() - 1 ) );
-					auto v = (int) ( ( 1 - uv.y ) * ( _diff.height() - 1 ) );
-
-					auto color = as_px( as_vec( _diff( u, v ) ) * val );
-
-					_frame( i, j ) = color;
+					_frame( i, j ) = calc_color( pixel( _diff, uv ), intensity );
 				}
 			}
 		}
@@ -216,11 +220,6 @@ namespace sharpeye
 		_diff = img;
 	}
 
-	static glm::dvec4 mul( glm::dmat4 const & m, glm::dvec3 const & v )
-	{
-		return m * glm::dvec4{ v, 1 };
-	}
-
 	void Render::draw( Model const & model )
 	{
 		double const w = _frame.width();
@@ -228,10 +227,9 @@ namespace sharpeye
 
 		glm::dmat4 const viewport = calc_viewport( _frame );
 		glm::dmat4 const model_view = _view * model.m;
-		glm::dvec3 const light = glm::normalize( glm::dvec3{ _proj * model_view * -_light } );
 
 		auto const m = viewport * _proj * model_view;
-		auto const normal_mtx = glm::transpose( glm::inverse( _proj * model_view ) );
+		//auto const normal_mtx = glm::transpose( glm::inverse( _proj * model_view ) );
 
 		for( auto const & face : model.faces )
 		{
@@ -245,9 +243,9 @@ namespace sharpeye
 
 			glm::dvec3 lum
 			{
-				calc_intensity( light, normal_mtx, n0 ),
-				calc_intensity( light, normal_mtx, n1 ),
-				calc_intensity( light, normal_mtx, n2 )
+				clip( glm::dot( _light, mul_v( model.m, n0 ) ) ),
+				clip( glm::dot( _light, mul_v( model.m, n1 ) ) ),
+				clip( glm::dot( _light, mul_v( model.m, n2 ) ) )
 			};
 
 			glm::dmat3x4 vs

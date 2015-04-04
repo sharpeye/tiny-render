@@ -17,7 +17,16 @@ static void load_map( boost::filesystem::path const & base, std::string const & 
 		base.parent_path() / ( base.filename().stem().string() + postfix ), 
 		".png" );
 
-	gil::png_read_image( filename.string(), map );
+	try
+	{
+		gil::png_read_image( filename.string(), map );
+	}
+	catch( std::exception & e )
+	{
+		std::cerr << "ERROR [load_map] can't load " << filename << ": " << e.what() << std::endl;
+
+		map.recreate( 1, 1, gil::rgb8_pixel_t{ 128, 128, 128 }, 0 );
+	}
 }
 
 int main( int argc, char * argv[] )
@@ -56,7 +65,7 @@ int main( int argc, char * argv[] )
 		gil::rgb8_image_t normal_map;
 
 		load_map( in, "_diffuse", diffuse_map );
-		//load_map( in, "_normal", normal_map );
+		load_map( in, "_nm", normal_map );
 
 		gil::fill_pixels( gil::view( img ), gil::rgb8_pixel_t{ 0, 100, 0 } );
 
@@ -67,7 +76,7 @@ int main( int argc, char * argv[] )
 			glm::dvec3{ 0, 0, 0 },
 			glm::dvec3{ 0, 1, 0 } ) );
 
-		render.set_proj_matrix( glm::perspective( 45.0, w / (double) h, 1.0, 10.0 ) );
+		render.set_proj_matrix( glm::perspective( glm::radians( 44.0 ), w / (double) h, 0.1, 10.0 ) );
 
 		auto model = load_obj( in );
 
