@@ -138,6 +138,18 @@ namespace sharpeye
 		};
 	}
 
+	static glm::dvec3 correct_barycentric( glm::dvec3 const & bc, glm::dvec3 const & w )
+	{
+		auto wp = 1.0 / ( bc[ 0 ] / w[ 0 ] + bc[ 1 ] / w[ 1 ] + bc[ 2 ] / w[ 2 ] );
+
+		return 
+		{
+			bc[ 0 ] * wp / w[ 0 ],
+			bc[ 1 ] * wp / w[ 1 ],
+			bc[ 2 ] * wp / w[ 2 ]
+		};
+	}
+
 	void Render::fill_triangle(
 		glm::dmat3x4 const & vs,
 		glm::dmat3 const & ts,
@@ -177,12 +189,19 @@ namespace sharpeye
 				{
 					z = (float) p;
 
+					auto cbc = correct_barycentric( bc, 
+						{ 
+							vs[ 0 ][ 3 ], 
+							vs[ 1 ][ 3 ], 
+							vs[ 2 ][ 3 ] 
+					} );
+
 					auto val = std::min( 1.0, std::max( 0.0, glm::dot( lum, bc ) ) );
 
-					auto uv = ts[ 0 ] * bc[ 0 ] + ts[ 1 ] * bc[ 1 ] + ts[ 2 ] * bc[ 2 ];
+					auto uv = ts[ 0 ] * cbc[ 0 ] + ts[ 1 ] * cbc[ 1 ] + ts[ 2 ] * cbc[ 2 ];
 
-					auto u = (int) ( uv.x * _diff.width() );
-					auto v = (int) ( ( 1 - uv.y ) * _diff.height() );
+					auto u = (int) ( uv.x * ( _diff.width() - 1 ) );
+					auto v = (int) ( ( 1 - uv.y ) * ( _diff.height() - 1 ) );
 
 					auto color = as_px( as_vec( _diff( u, v ) ) * val );
 
